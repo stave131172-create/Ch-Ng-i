@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chữ & Người</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #eef1f5;
+  padding: 20px;
+}
+h1 { text-align: center; }
+.container { max-width: 700px; margin: auto; }
+.box {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+input, textarea, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+}
+button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+}
+.post {
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.actions span {
+  margin-right: 15px;
+  cursor: pointer;
+}
+.liked { color: red; }
+.comment { font-size: 14px; margin-top: 3px; }
+</style>
+</head>
+
+<body>
+<h1>✍️ Chữ & Người</h1>
+
+<div class="container">
+
+<div class="box">
+  <input id="nicknameInput" placeholder="Biệt danh của bạn">
+  <button onclick="saveName()">Lưu biệt danh</button>
+</div>
+
+<div class="box">
+  <input id="titleInput" placeholder="Tiêu đề bài viết">
+  <textarea id="contentInput" rows="4" placeholder="Nội dung"></textarea>
+  <button onclick="addPost()">Đăng bài</button>
+</div>
+
+<div class="box" id="posts"></div>
+
+</div>
+
+<script>
+let username = localStorage.getItem("username") || "";
+let posts = JSON.parse(localStorage.getItem("posts") || "[]");
+
+const nicknameInput = document.getElementById("nicknameInput");
+const titleInput = document.getElementById("titleInput");
+const contentInput = document.getElementById("contentInput");
+const postsDiv = document.getElementById("posts");
+
+if (username) nicknameInput.value = username;
+
+function saveName() {
+  if (!nicknameInput.value) return alert("Nhập biệt danh!");
+  username = nicknameInput.value;
+  localStorage.setItem("username", username);
+  alert("Đã lưu biệt danh 👍");
+}
+
+function savePosts() {
+  localStorage.setItem("posts", JSON.stringify(posts));
+}
+
+function renderPosts() {
+  postsDiv.innerHTML = "";
+  posts.forEach((p, i) => {
+    const post = document.createElement("div");
+    post.className = "post";
+    post.innerHTML = `
+      <h3>${p.title}</h3>
+      <p>${p.content}</p>
+
+      <div class="actions">
+        <span onclick="toggleLike(${i})" class="${p.liked ? "liked" : ""}">
+          ❤️ <b>${p.likes}</b>
+        </span>
+        <span>💬 <b>${p.comments.length}</b></span>
+      </div>
+
+      <input placeholder="Bình luận với ${username}"
+        onkeydown="addComment(event, ${i})">
+      <div>
+        ${p.comments.map(c => `<div class="comment">${c}</div>`).join("")}
+      </div>
+    `;
+    postsDiv.appendChild(post);
+  });
+}
+
+function addPost() {
+  if (!username) return alert("Lưu biệt danh trước!");
+  if (!titleInput.value || !contentInput.value) return alert("Nhập đủ!");
+
+  posts.unshift({
+    title: titleInput.value,
+    content: contentInput.value,
+    likes: 0,
+    liked: false,
+    comments: []
+  });
+
+  savePosts();
+  renderPosts();
+  titleInput.value = "";
+  contentInput.value = "";
+}
+
+function toggleLike(i) {
+  posts[i].liked = !posts[i].liked;
+  posts[i].likes += posts[i].liked ? 1 : -1;
+  savePosts();
+  renderPosts();
+}
+
+function addComment(e, i) {
+  if (e.key === "Enter" && e.target.value) {
+    posts[i].comments.push(username + ": " + e.target.value);
+    savePosts();
+    renderPosts();
+  }
+}
+
+renderPosts();
+</script>
+
+</body>
+</html>
+
